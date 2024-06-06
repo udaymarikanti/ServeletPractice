@@ -22,5 +22,13 @@
     <servlet-name>ProjectServlet</servlet-name>
     <url-pattern>/ProjectServlet/*</url-pattern>
   </servlet-mapping>
+  <servlet>
+    <servlet-name>RegisterServlet</servlet-name>
+    <servlet-class>com.example.Register</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>RegisterServlet</servlet-name>
+    <url-pattern>/register</url-pattern>
+  </servlet-mapping>
 
 </web-app>
