@@ -12,8 +12,10 @@ public class HeaderServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.getWriter().write("hello  from the header ");
-        MongoClient mongoClient = new MongoClient();
-        mongoClient.getDatabase("crm");
+        req.getHeader("username");
+        req.getHeader("password");
+        req.getRequestDispatcher("HrServlet").forward(req,resp);
+
 
     }
 }
