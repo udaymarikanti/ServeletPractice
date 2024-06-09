@@ -3,10 +3,9 @@ package com.example;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import org.bson.Document;
-
-import com.mongodb.client.MongoDatabase;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,79 +15,77 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.UUID;
 
-import static java.lang.System.out;
-
 public class Register extends HttpServlet {
     private MongoClient mongoClient;
     private MongoDatabase database;
-    private  String username;
-    private  String password;
 
-    private  String otp;
-
+    @Override
+    public void init() throws ServletException {
+        String uri = "mongodb://localhost:27017";
+        MongoClientURI clientURI = new MongoClientURI(uri);
+        mongoClient = new MongoClient(clientURI);
+        database = mongoClient.getDatabase("crm");
+    }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         PrintWriter out = resp.getWriter();
-        String uri ="mongodb://localhost:27017";
-        MongoClientURI clientURI = new MongoClientURI(uri);
-        mongoClient = new MongoClient(clientURI);
-        database = mongoClient.getDatabase("crm");
-        // Get collection
-        MongoCollection<Document> collection = database.getCollection("user");
+        resp.setContentType("text/html");
 
-        username = req.getParameter("username");
-         password = req.getParameter("password");
+        String username = req.getParameter("username");
+        String password = req.getParameter("password");
+
         if (username == null || password == null || username.isEmpty() || password.isEmpty()) {
             out.println("<h1>Username and Password are required!</h1>");
             return;
         }
-        otp = UUID.randomUUID().toString();
 
-        // Create document
+        String otp = UUID.randomUUID().toString();
+
+        MongoCollection<Document> collection = database.getCollection("user");
+
         Document user = new Document("username", username)
-                .append("password", password).append("otp",otp);
+                .append("password", password)
+                .append("otp", otp);
 
         collection.insertOne(user);
 
-
-        // Response to client
         out.println("<h1>Registration Successful</h1>");
-        out.println("<h1>your username :  </h1>"+username);
-        out.println("<h1>Your otp</h1>"+otp);
-
+        out.println("<p>Your username: " + username + "</p>");
+        out.println("<p>Your OTP: " + otp + "</p>");
     }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        MongoCollection<Document> collection = database.getCollection("user");
         PrintWriter out = resp.getWriter();
+        resp.setContentType("text/html");
 
+        String userOtp = req.getHeader("otp");
+        String username = req.getParameter("username");
 
-       String userOtp = req.getParameter("otp");
-      //  Document getDocument = ;
-            Document userDocument= collection.find(Filters.and(
-                    Filters.eq("username", username),
-                    Filters.eq("otp", userOtp)
-            )).first();
-
-            if(userDocument!=null){
-            out.println("<h1>your Otp is valide</h1>");
-        }else {
-            out.println("<h1>please enter valid otp  </h1>");
+        if (userOtp == null || userOtp.isEmpty() || username == null || username.isEmpty()) {
+            out.println("<h1>OTP and Username are required!</h1>");
+            return;
         }
 
+        MongoCollection<Document> collection = database.getCollection("user");
 
+        Document userDocument = collection.find(Filters.and(
+                Filters.eq("username", username),
+                Filters.eq("otp", userOtp)
+        )).first();
+
+        if (userDocument != null) {
+            out.println("<h1>Your OTP is valid</h1>");
+        } else {
+            out.println("<h1>Please enter a valid OTP</h1>");
+        }
     }
 
     @Override
     public void destroy() {
-        super.destroy();
-        // Close MongoDB connection
         if (mongoClient != null) {
             mongoClient.close();
         }
     }
-
-
 }
